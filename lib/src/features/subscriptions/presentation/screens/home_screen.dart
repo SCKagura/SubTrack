@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:subtrack/src/features/authentication/data/auth_repository.dart';
 import 'package:subtrack/src/features/subscriptions/data/subscription_repository.dart';
@@ -38,6 +38,7 @@ class HomeScreen extends ConsumerWidget {
               if (snapshot.hasError) {
                 return Center(child: Text('Error: ${snapshot.error}'));
               }
+
               if (!snapshot.hasData) {
                 return const Center(child: CircularProgressIndicator());
               }
@@ -56,7 +57,7 @@ class HomeScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'No subscriptions yet',
+                        'ยังไม่มีรายการสมัครสมาชิก',
                         style: TextStyle(
                           fontSize: 20,
                           color: Colors.grey[600],
@@ -65,8 +66,43 @@ class HomeScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Tap the button below to add one!',
+                        'แตะปุ่มด้านล่างเพื่อเพิ่ม!',
                         style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+                      ),
+                      const SizedBox(height: 32),
+                      OutlinedButton.icon(
+                        onPressed: () async {
+                          if (categories.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('กำลังโหลดหมวดหมู่...'),
+                              ),
+                            );
+                            return;
+                          }
+                          final messenger = ScaffoldMessenger.of(context);
+                          await repository.seedSampleSubscriptionsWithLogos(categories);
+                          if (context.mounted) {
+                            messenger.showSnackBar(
+                              const SnackBar(
+                                content: Text('นำเข้าข้อมูลตัวอย่างสำเร็จ!'),
+                              ),
+                            );
+                          }
+                        },
+                        icon: const Icon(Icons.download),
+                        label: const Text('นำเข้าข้อมูลตัวอย่าง'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.purpleAccent,
+                          side: const BorderSide(color: Colors.purpleAccent),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 12,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -97,261 +133,280 @@ class HomeScreen extends ConsumerWidget {
                             color: category != null
                                 ? Color(
                                     category.colorValue,
-                                  ).withOpacity( isCancelled ? 0.08 : 0.15)
-                                : Colors.black.withOpacity( isCancelled ? 0.1 : 0.2),
+                                  ).withValues(alpha: isCancelled ? 0.08 : 0.15)
+                                : Colors.black.withValues(alpha: isCancelled ? 0.1 : 0.2),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Material(
-                      color: Colors.transparent,
-                      borderRadius: BorderRadius.circular(20),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(20),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  SubscriptionDetailScreen(subscription: sub),
-                            ),
-                          );
-                        },
-                        child: Stack(
-                          children: [
-                            Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(20),
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                const Color(0xFF1E1E1E),
-                                category != null
-                                    ? Color(
-                                        category.colorValue,
-                                      ).withOpacity( 0.04)
-                                    : const Color(0xFF1A1A1A),
-                              ],
-                            ),
-                            border: Border.all(
-                              color: category != null
-                                  ? Color(
-                                      category.colorValue,
-                                    ).withOpacity( 0.3)
-                                  : Colors.white10,
-                              width: 1.5,
-                            ),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(20),
-                            child: Row(
-                              children: [
-                                // Category Icon
-                                Container(
-                                  width: 64,
-                                  height: 64,
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                      colors: category != null
-                                          ? [
-                                              Color(
-                                                category.colorValue,
-                                              ).withOpacity( 0.3),
-                                              Color(
-                                                category.colorValue,
-                                              ).withOpacity( 0.15),
-                                            ]
-                                          : [
-                                              Colors.grey.withOpacity( 0.3,
-                                              ),
-                                              Colors.grey.withOpacity( 0.15,
-                                              ),
-                                            ],
-                                    ),
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(
-                                      color: category != null
-                                          ? Color(
-                                              category.colorValue,
-                                            ).withOpacity( 0.5)
-                                          : Colors.grey.withOpacity( 0.5),
-                                      width: 2,
-                                    ),
-                                  ),
-                                  child: Icon(
-                                    category != null
-                                        ? IconData(
-                                            category.iconCode,
-                                            fontFamily: 'MaterialIcons',
-                                          )
-                                        : Icons.subscriptions,
-                                    color: category != null
-                                        ? Color(category.colorValue)
-                                        : Colors.grey,
-                                    size: 32,
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-
-                                // Info
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        sub.name,
-                                        style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                          letterSpacing: -0.5,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      const SizedBox(height: 6),
-                                      Text(
-                                        '${_getCurrencySymbol(sub.currency)}${sub.price.toStringAsFixed(0)} / ${sub.cycle.name}',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.grey[400],
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 10),
-                                      Row(
-                                        children: [
-                                          Container(
-                                            padding: const EdgeInsets.all(4),
-                                            decoration: BoxDecoration(
-                                              color: isOverdue
-                                                  ? Colors.red.withOpacity( 0.15,
-                                                    )
-                                                  : isUrgent
-                                                  ? Colors.orange.withOpacity( 0.15,
-                                                    )
-                                                  : Colors.blue.withOpacity( 0.15,
-                                                    ),
-                                              borderRadius:
-                                                  BorderRadius.circular(6),
-                                            ),
-                                            child: Icon(
-                                              Icons.calendar_today,
-                                              size: 14,
-                                              color: isOverdue
-                                                  ? Colors.red
-                                                  : isUrgent
-                                                  ? Colors.orange
-                                                  : Colors.blue,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 6),
-                                          Text(
-                                            'Due: ${sub.nextPaymentDate.day}/${sub.nextPaymentDate.month}',
-                                            style: TextStyle(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w500,
-                                              color: isOverdue
-                                                  ? Colors.red
-                                                  : isUrgent
-                                                  ? Colors.orange
-                                                  : Colors.grey[400],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-
-                                const SizedBox(width: 12),
-
-                                // Status Badge
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 5,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: _getStatusColor(
-                                      sub.status,
-                                    ).withOpacity( 0.2),
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(
-                                      color: _getStatusColor(
-                                        sub.status,
-                                      ).withOpacity( 0.4),
-                                      width: 1,
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Container(
-                                        width: 6,
-                                        height: 6,
-                                        decoration: BoxDecoration(
-                                          color: _getStatusColor(sub.status),
-                                          shape: BoxShape.circle,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        sub.status,
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          color: _getStatusColor(sub.status),
-                                          fontWeight: FontWeight.bold,
-                                          letterSpacing: 0.5,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                        // Cancelled badge overlay
-                        if (isCancelled)
-                          Positioned(
-                            top: 12,
-                            right: 12,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.grey.withOpacity( 0.9),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: Colors.grey.withOpacity( 0.5),
-                                  width: 1,
-                                ),
-                              ),
-                              child: const Text(
-                                'CANCELLED',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white70,
-                                  letterSpacing: 1,
-                                ),
-                              ),
-                            ),
                           ),
                         ],
                       ),
+                      child: Material(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(20),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(20),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    SubscriptionDetailScreen(subscription: sub),
+                              ),
+                            );
+                          },
+                          child: Stack(
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20),
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      const Color(0xFF1E1E1E),
+                                      category != null
+                                          ? Color(
+                                              category.colorValue,
+                                            ).withValues(alpha: 0.04)
+                                          : const Color(0xFF1A1A1A),
+                                    ],
+                                  ),
+                                  border: Border.all(
+                                    color: category != null
+                                        ? Color(
+                                            category.colorValue,
+                                          ).withValues(alpha: 0.3)
+                                        : Colors.white10,
+                                    width: 1.5,
+                                  ),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(20),
+                                  child: Row(
+                                    children: [
+                                      // Category Icon
+                                      Container(
+                                        width: 64,
+                                        height: 64,
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                            colors: category != null
+                                                ? [
+                                                    Color(
+                                                      category.colorValue,
+                                                    ).withValues(alpha: 0.3),
+                                                    Color(
+                                                      category.colorValue,
+                                                    ).withValues(alpha: 0.15),
+                                                  ]
+                                                : [
+                                                    Colors.grey.withValues(alpha: 0.3),
+                                                    Colors.grey.withValues(alpha: 0.15),
+                                                  ],
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
+                                          border: Border.all(
+                                            color: category != null
+                                                ? Color(
+                                                    category.colorValue,
+                                                  ).withValues(alpha: 0.5)
+                                                : Colors.grey.withValues(alpha: 0.5),
+                                            width: 2,
+                                          ),
+                                        ),
+                                        child: Icon(
+                                          category != null
+                                              ? IconData(
+                                                  category.iconCode,
+                                                  fontFamily: 'MaterialIcons',
+                                                )
+                                              : Icons.subscriptions,
+                                          color: category != null
+                                              ? Color(category.colorValue)
+                                              : Colors.grey,
+                                          size: 32,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 16),
+
+                                      // Info
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              sub.name,
+                                              style: const TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                                letterSpacing: -0.5,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            const SizedBox(height: 6),
+                                            Text(
+                                              '${_getCurrencySymbol(sub.currency)}${sub.price.toStringAsFixed(0)} / ${sub.cycle.name == 'monthly'
+                                                  ? 'เดือน'
+                                                  : sub.cycle.name == 'yearly'
+                                                  ? 'ปี'
+                                                  : 'สัปดาห์'}',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                color: Colors.grey[400],
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 10),
+                                            Row(
+                                              children: [
+                                                Container(
+                                                  padding: const EdgeInsets.all(
+                                                    4,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color: isOverdue
+                                                        ? Colors.red
+                                                              .withValues(alpha: 0.15)
+                                                        : isUrgent
+                                                        ? Colors.orange
+                                                              .withValues(alpha: 0.15)
+                                                        : Colors.blue
+                                                              .withValues(alpha: 
+                                                                0.15,
+                                                              ),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          6,
+                                                        ),
+                                                  ),
+                                                  child: Icon(
+                                                    Icons.calendar_today,
+                                                    size: 14,
+                                                    color: isOverdue
+                                                        ? Colors.red
+                                                        : isUrgent
+                                                        ? Colors.orange
+                                                        : Colors.blue,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 6),
+                                                Text(
+                                                  'กำหนดจ่าย: ${sub.nextPaymentDate.day}/${sub.nextPaymentDate.month}',
+                                                  style: TextStyle(
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w500,
+                                                    color: isOverdue
+                                                        ? Colors.red
+                                                        : isUrgent
+                                                        ? Colors.orange
+                                                        : Colors.grey[400],
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+
+                                      const SizedBox(width: 12),
+
+                                      // Status Badge
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                          vertical: 5,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: _getStatusColor(
+                                            sub.status,
+                                          ).withValues(alpha: 0.2),
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                          border: Border.all(
+                                            color: _getStatusColor(
+                                              sub.status,
+                                            ).withValues(alpha: 0.4),
+                                            width: 1,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Container(
+                                              width: 6,
+                                              height: 6,
+                                              decoration: BoxDecoration(
+                                                color: _getStatusColor(
+                                                  sub.status,
+                                                ),
+                                                shape: BoxShape.circle,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 6),
+                                            Text(
+                                              sub.status == 'Active'
+                                                  ? 'ใช้งานอยู่'
+                                                  : sub.status == 'Cancelled'
+                                                  ? 'ยกเลิกแล้ว'
+                                                  : 'หยุดชั่วคราว',
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                color: _getStatusColor(
+                                                  sub.status,
+                                                ),
+                                                fontWeight: FontWeight.bold,
+                                                letterSpacing: 0.5,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              // Cancelled badge overlay
+                              if (isCancelled)
+                                Positioned(
+                                  top: 12,
+                                  right: 12,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.withValues(alpha: 0.9),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: Colors.grey.withValues(alpha: 0.5),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: const Text(
+                                      'ยกเลิกแล้ว',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white70,
+                                        letterSpacing: 1,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                );
+                  );
                 },
               );
             },
@@ -367,7 +422,7 @@ class HomeScreen extends ConsumerWidget {
             ),
           );
         },
-        label: const Text('Add New'),
+        label: const Text('เพิ่มใหม่'),
         icon: const Icon(Icons.add),
       ),
     );

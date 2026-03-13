@@ -12,7 +12,7 @@ class SettingsScreen extends ConsumerWidget {
     final authRepo = ref.read(authRepositoryProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(title: const Text('การตั้งค่า')),
       body: userProfileAsync.when(
         data: (profile) {
           final nameController = TextEditingController(
@@ -22,14 +22,14 @@ class SettingsScreen extends ConsumerWidget {
             padding: const EdgeInsets.all(16),
             children: [
               const Text(
-                'User Profile',
+                'โปรไฟล์ผู้ใช้',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: nameController,
                 decoration: InputDecoration(
-                  labelText: 'Display Name',
+                  labelText: 'ชื่อที่แสดง',
                   suffixIcon: IconButton(
                     icon: const Icon(Icons.save),
                     onPressed: () {
@@ -37,7 +37,7 @@ class SettingsScreen extends ConsumerWidget {
                           .read(userProfileRepositoryProvider)
                           .updateDisplayName(profile.uid, nameController.text);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Name updated')),
+                        const SnackBar(content: Text('อัปเดตชื่อสำเร็จ')),
                       );
                     },
                   ),
@@ -45,14 +45,14 @@ class SettingsScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 24),
               const Text(
-                'Preferences',
+                'ค่าที่ตั้งไว้',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: profile.currency,
+                initialValue: profile.currency,
                 decoration: const InputDecoration(
-                  labelText: 'Default Currency',
+                  labelText: 'สกุลเงินเริ่มต้น',
                 ),
                 items: ['THB', 'USD', 'EUR', 'JPY', 'GBP']
                     .map((c) => DropdownMenuItem(value: c, child: Text(c)))
@@ -69,7 +69,7 @@ class SettingsScreen extends ConsumerWidget {
               ListTile(
                 leading: const Icon(Icons.logout, color: Colors.red),
                 title: const Text(
-                  'Sign Out',
+                  'ออกจากระบบ',
                   style: TextStyle(color: Colors.red),
                 ),
                 onTap: () {

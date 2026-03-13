@@ -1,115 +1,143 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' hide Category;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:subtrack/src/features/subscriptions/domain/category.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:subtrack/src/features/authentication/data/auth_repository.dart';
 import 'package:subtrack/src/features/authentication/domain/user_profile.dart';
+import 'package:subtrack/src/features/subscriptions/domain/category.dart';
 import 'package:subtrack/src/features/subscriptions/domain/family_member.dart';
 
 part 'user_profile_repository.g.dart';
 
 class UserProfileRepository {
-  final FirebaseFirestore _firestore;
+  final SupabaseClient _supabase;
 
-  UserProfileRepository(this._firestore);
+  UserProfileRepository(this._supabase);
 
+  /// Called after sign-in to seed categories/family member if first login
   Future<void> ensureUserInitialized(User user) async {
-    final userDoc = _firestore.collection('users').doc(user.uid);
-    final snapshot = await userDoc.get();
+    // Check if categories exist (proxy for "initialized")
+    final existing = await _supabase
+        .from('categories')
+        .select('id')
+        .eq('user_id', user.id)
+        .limit(1);
 
-    if (!snapshot.exists) {
-      await _initializeNewUser(user, userDoc);
+    if ((existing as List).isEmpty) {
+      await _initializeNewUser(user);
     }
   }
 
-  Future<void> _initializeNewUser(User user, DocumentReference userDoc) async {
-    // 1. Create Default Family Member (The User)
-    final me = FamilyMember.create(
-      name: user.displayName ?? 'Me',
-      photoUrl: user.photoURL ?? '',
-      isCurrentUser: true,
-    );
-
-    // 2. Create Default Categories
-    final defaults = Category.defaults(
-      'THB',
-    ); // Default currency, configurable later
-
-    // Batch write for atomicity
-    final batch = _firestore.batch();
-
-    // Set User Profile (Root Doc)
-    batch.set(userDoc, {
-      'email': user.email,
-      'createdAt': FieldValue.serverTimestamp(),
-      'defaultMemberId': me.id,
+  Future<void> _initializeNewUser(User user) async {
+    // 1. Upsert profile (trigger may have already created it)
+    await _supabase.from('profiles').upsert({
+      'id': user.id,
+      'email': user.email ?? '',
+      'display_name': user.userMetadata?['full_name'],
+      'photo_url': user.userMetadata?['avatar_url'],
+      'currency': 'THB',
+      'monthly_budget': 0.0,
     });
 
-    // Add Family Member
-    final membersCollection = userDoc.collection('family_members');
-    batch.set(membersCollection.doc(me.id), {
-      'id': me.id,
-      'name': me.name,
-      'photoUrl': me.photoUrl,
-      'isCurrentUser': true,
-    });
-
-    // Add Categories
-    final categoriesCollection = userDoc.collection('categories');
-    for (final category in defaults) {
-      batch.set(categoriesCollection.doc(category.id), {
-        'id': category.id,
-        'name': category.name,
-        'iconCode': category.iconCode,
-        'colorValue': category.colorValue,
-        'monthlyBudget': category.monthlyBudget,
-        'currency': category.currency,
+    // 2. Seed default categories
+    final defaults = Category.defaults('THB');
+    for (final cat in defaults) {
+      await _supabase.from('categories').upsert({
+        'id': cat.id,
+        'user_id': user.id,
+        'name': cat.name,
+        'icon_code': cat.iconCode,
+        'color_value': cat.colorValue,
+        'monthly_budget': cat.monthlyBudget,
+        'currency': cat.currency,
       });
     }
-    await batch.commit();
+
+    // 3. Create default family member (Me)
+    final me = FamilyMember.create(
+      name:
+          user.userMetadata?['full_name'] ?? user.email?.split('@')[0] ?? 'Me',
+      photoUrl: user.userMetadata?['avatar_url'] ?? '',
+      isCurrentUser: true,
+    );
+    await _supabase.from('family_members').upsert({
+      'id': me.id,
+      'user_id': user.id,
+      'name': me.name,
+      'photo_url': me.photoUrl,
+      'is_current_user': true,
+    });
   }
 
   Stream<UserProfile> watchUserProfile(String uid) {
-    return _firestore.collection('users').doc(uid).snapshots().map((snapshot) {
-      if (!snapshot.exists) {
-        // Return dummy or throw? Let's return a basic one.
-        return UserProfile(
-          uid: uid,
-          email: '',
-          displayName: 'User',
-          currency: 'THB',
-        );
-      }
-      return UserProfile.fromMap(uid, snapshot.data()!);
-    });
+    return _supabase
+        .from('profiles')
+        .stream(primaryKey: ['id'])
+        .eq('id', uid)
+        .handleError((error) {
+          debugPrint('Realtime User Profile Error: $error');
+          if (error.toString().contains('InvalidJWTToken') ||
+              error.toString().contains('expired')) {
+            _supabase.auth.refreshSession();
+          }
+        })
+        .map((rows) {
+          if (rows.isEmpty) {
+            return UserProfile(uid: uid, email: '', currency: 'THB');
+          }
+          final row = rows.first;
+          return UserProfile(
+            uid: uid,
+            email: row['email'] ?? '',
+            displayName: row['display_name'],
+            photoUrl: row['photo_url'],
+            currency: row['currency'] ?? 'THB',
+            monthlyBudget: (row['monthly_budget'] ?? 0).toDouble(),
+          );
+        });
   }
 
   Future<void> updateDisplayName(String uid, String name) async {
-    await _firestore.collection('users').doc(uid).update({'displayName': name});
+    await _supabase
+        .from('profiles')
+        .update({'display_name': name})
+        .eq('id', uid);
+  }
+
+  Future<void> updatePhotoUrl(String uid, String photoUrl) async {
+    await _supabase
+        .from('profiles')
+        .update({'photo_url': photoUrl})
+        .eq('id', uid);
   }
 
   Future<void> updateCurrency(String uid, String currency) async {
-    await _firestore.collection('users').doc(uid).update({
-      'currency': currency,
-    });
+    await _supabase
+        .from('profiles')
+        .update({'currency': currency})
+        .eq('id', uid);
+  }
+
+  Future<void> updateMonthlyBudget(String uid, double budget) async {
+    await _supabase
+        .from('profiles')
+        .update({'monthly_budget': budget})
+        .eq('id', uid);
   }
 }
 
 @Riverpod(keepAlive: true)
-UserProfileRepository userProfileRepository(UserProfileRepositoryRef ref) {
-  return UserProfileRepository(FirebaseFirestore.instance);
+UserProfileRepository userProfileRepository(Ref ref) {
+  return UserProfileRepository(Supabase.instance.client);
 }
 
 @riverpod
-Stream<UserProfile> userProfile(UserProfileRef ref) {
-  final authState = ref.watch(authStateProvider); // Need to import this
-  return authState.when(
+Stream<UserProfile> userProfile(Ref ref) {
+  final authStateAsync = ref.watch(authStateProvider);
+  return authStateAsync.when(
     data: (user) {
       if (user == null) return const Stream.empty();
-      return ref
-          .watch(userProfileRepositoryProvider)
-          .watchUserProfile(user.uid);
+      return ref.watch(userProfileRepositoryProvider).watchUserProfile(user.id);
     },
     error: (_, __) => const Stream.empty(),
     loading: () => const Stream.empty(),

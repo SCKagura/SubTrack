@@ -1,50 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:subtrack/src/app.dart';
-import 'package:subtrack/src/features/subscriptions/data/category_repository.dart';
-import 'package:subtrack/src/features/subscriptions/data/subscription_repository.dart';
-import 'package:subtrack/src/features/subscriptions/domain/category.dart';
-import 'package:subtrack/src/features/subscriptions/domain/family_member.dart';
-import 'package:subtrack/src/features/subscriptions/domain/payment_record.dart';
-import 'package:subtrack/src/features/subscriptions/domain/subscription.dart';
+import 'package:subtrack/src/features/notifications/application/notification_service.dart';
+
+const _supabaseUrl = 'https://rbkqsklkjdmxiekxapaa.supabase.co';
+const _supabaseKey = 'sb_publishable_Ss4JQN0F1ypxbS2G3N2G6w_g25qp5QT';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
 
-  // Initialize Hive
-  await Hive.initFlutter();
+  // Initialize Notifications
+  final notificationService = NotificationService();
+  await notificationService.init();
+  await notificationService.requestPermissions();
 
-  // Register Adapters
-  Hive.registerAdapter(FamilyMemberAdapter());
-  Hive.registerAdapter(CategoryAdapter());
-  Hive.registerAdapter(PaymentRecordAdapter());
-  Hive.registerAdapter(SubscriptionAdapter());
-  Hive.registerAdapter(BillingCycleAdapter());
-
-  // Open Boxes
-  final subscriptionBox = await Hive.openBox<Subscription>('subscriptions');
-  final paymentBox = await Hive.openBox<PaymentRecord>('payments');
-  final categoryBox = await Hive.openBox<Category>('categories');
-
-  // Create Repository
-  final repository = SubscriptionRepository(
-    subscriptionBox,
-    paymentBox,
-    () => FirebaseAuth.instance.currentUser?.uid,
+  await Supabase.initialize(
+    url: _supabaseUrl,
+    anonKey: _supabaseKey,
+    authOptions: const FlutterAuthClientOptions(autoRefreshToken: true),
   );
-  final catRepo = CategoryRepository(categoryBox);
 
-  runApp(
-    ProviderScope(
-      overrides: [
-        subscriptionRepositoryProvider.overrideWithValue(repository),
-        categoryRepositoryProvider.overrideWithValue(catRepo),
-      ],
-      child: const SubTrackApp(),
-    ),
-  );
-}
+  runApp(const ProviderScope(child: SubTrackApp()));
+}

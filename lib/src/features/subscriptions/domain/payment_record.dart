@@ -1,29 +1,12 @@
-import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
 
-part 'payment_record.g.dart';
-
-@HiveType(typeId: 2)
 class PaymentRecord {
-  @HiveField(0)
   final String id;
-
-  @HiveField(1)
   final String subscriptionId;
-
-  @HiveField(2)
   final DateTime date;
-
-  @HiveField(3)
   final double amount;
-
-  @HiveField(4)
   final String status; // 'Paid', 'Skipped'
-
-  @HiveField(5)
   final String? note;
-
-  @HiveField(6)
   final String? userId;
 
   PaymentRecord({
@@ -52,6 +35,29 @@ class PaymentRecord {
       status: status,
       note: note,
       userId: userId,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'subscriptionId': subscriptionId,
+      'date': date.toIso8601String(),
+      'amount': amount,
+      'status': status,
+      'note': note,
+      'userId': userId,
+    };
+  }
+
+  factory PaymentRecord.fromMap(Map<String, dynamic> map, String id) {
+    return PaymentRecord(
+      id: id,
+      subscriptionId: map['subscriptionId'] ?? '',
+      date: DateTime.parse(map['date'] ?? DateTime.now().toIso8601String()),
+      amount: (map['amount'] ?? 0.0).toDouble(),
+      status: map['status'] ?? 'Paid',
+      note: map['note'],
+      userId: map['userId'],
     );
   }
 }

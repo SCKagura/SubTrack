@@ -68,7 +68,7 @@ class CategoryManagementScreen extends ConsumerWidget {
                 : 0.0;
 
             return Scaffold(
-              appBar: AppBar(title: const Text('Categories')),
+              appBar: AppBar(title: const Text('หมวดหมู่')),
               body: SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -79,27 +79,27 @@ class CategoryManagementScreen extends ConsumerWidget {
                       children: [
                         Expanded(
                           child: _buildSummaryCard(
-                            'Total Categories',
+                            'หมวดหมู่ทั้งหมด',
                             '${categories.length}',
-                            '${categories.where((c) => c.monthlyBudget > 0).length} with budget limits',
+                            '${categories.where((c) => c.monthlyBudget > 0).length} ที่มีการกำหนดงบ',
                             Icons.category,
                           ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: _buildSummaryCard(
-                            'Total Monthly Budget',
+                            'งบประมาณรายเดือนรวม',
                             '฿${totalMonthlyBudget.toStringAsFixed(0)}',
-                            'Across all categories',
+                            'ทุกหมวดหมู่รวมกัน',
                             Icons.attach_money,
                           ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: _buildSummaryCard(
-                            'Budget Utilization',
+                            'การใช้งานงบประมาณ',
                             '${budgetUtilization.toStringAsFixed(0)}%',
-                            'of budget',
+                            'ของงบประมาณ',
                             Icons.pie_chart,
                           ),
                         ),
@@ -113,7 +113,7 @@ class CategoryManagementScreen extends ConsumerWidget {
                             child: Padding(
                               padding: EdgeInsets.all(32.0),
                               child: Text(
-                                'No categories found.\nTap + to add one!',
+                                'ยังไม่มีหมวดหมู่\nแตะ + เพื่อเพิ่ม!',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(color: Colors.grey),
                               ),
@@ -234,12 +234,12 @@ class CategoryManagementScreen extends ConsumerWidget {
             end: Alignment.bottomRight,
             colors: [
               const Color(0xFF1E1E1E),
-              Color(cat.colorValue).withOpacity( 0.05),
+              Color(cat.colorValue).withValues(alpha: 0.05),
             ],
           ),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: Color(cat.colorValue).withOpacity( 0.3),
+            color: Color(cat.colorValue).withValues(alpha: 0.3),
             width: 1,
           ),
         ),
@@ -255,7 +255,7 @@ class CategoryManagementScreen extends ConsumerWidget {
                     Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: Color(cat.colorValue).withOpacity( 0.2),
+                        color: Color(cat.colorValue).withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
@@ -276,7 +276,7 @@ class CategoryManagementScreen extends ConsumerWidget {
                           ),
                         ),
                         Text(
-                          '$count subscriptions',
+                          '$count รายการ',
                           style: const TextStyle(
                             color: Colors.grey,
                             fontSize: 10,
@@ -294,7 +294,7 @@ class CategoryManagementScreen extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
-                      'Spent this month',
+                      'จ่ายแล้วเดือนนี้',
                       style: TextStyle(color: Colors.grey, fontSize: 10),
                     ),
                     Text(
@@ -311,7 +311,7 @@ class CategoryManagementScreen extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
-                      'Budget Limit',
+                      'งบประมาณที่ตั้งไว้',
                       style: TextStyle(color: Colors.grey, fontSize: 10),
                     ),
                     Text(
@@ -332,7 +332,7 @@ class CategoryManagementScreen extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      isOverBudget ? 'Over budget' : 'On track',
+                      isOverBudget ? 'เกินงบประมาณ' : 'อยู่ในเกณฑ์',
                       style: TextStyle(
                         color: isOverBudget ? Colors.red : Colors.green,
                         fontSize: 10,
@@ -398,7 +398,7 @@ class CategoryManagementScreen extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Add Category'),
+        title: const Text('เพิ่มหมวดหมู่'),
         content: StatefulBuilder(
           builder: (context, setState) {
             return SingleChildScrollView(
@@ -408,18 +408,18 @@ class CategoryManagementScreen extends ConsumerWidget {
                   TextField(
                     controller: nameController,
                     decoration: const InputDecoration(
-                      labelText: 'Category Name',
+                      labelText: 'ชื่อหมวดหมู่',
                     ),
                   ),
                   TextField(
                     controller: budgetController,
                     keyboardType: TextInputType.number,
                     decoration: const InputDecoration(
-                      labelText: 'Monthly Budget',
+                      labelText: 'งบประมาณรายเดือน',
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text('Pick Color'),
+                  const Text('เลือกสี'),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
@@ -442,7 +442,7 @@ class CategoryManagementScreen extends ConsumerWidget {
                     }).toList(),
                   ),
                   const SizedBox(height: 16),
-                  const Text('Pick Icon'),
+                  const Text('เลือกไอคอน'),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
@@ -468,7 +468,7 @@ class CategoryManagementScreen extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: const Text('ยกเลิก'),
           ),
           TextButton(
             onPressed: () {
@@ -483,7 +483,7 @@ class CategoryManagementScreen extends ConsumerWidget {
                 Navigator.pop(context);
               }
             },
-            child: const Text('Add'),
+            child: const Text('เพิ่ม'),
           ),
         ],
       ),
@@ -499,18 +499,18 @@ class CategoryManagementScreen extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Edit ${category.name}'),
+        title: Text('แก้ไข ${category.name}'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: nameController,
-              decoration: const InputDecoration(labelText: 'Category Name'),
+              decoration: const InputDecoration(labelText: 'ชื่อหมวดหมู่'),
             ),
             TextField(
               controller: budgetController,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Monthly Budget'),
+              decoration: const InputDecoration(labelText: 'งบประมาณรายเดือน'),
             ),
           ],
         ),
@@ -522,14 +522,14 @@ class CategoryManagementScreen extends ConsumerWidget {
               showDialog(
                 context: context,
                 builder: (context) => AlertDialog(
-                  title: const Text('Delete Category?'),
+                  title: const Text('ลบหมวดหมู่?'),
                   content: const Text(
-                    'Subscriptions in this category will not be deleted but may have display issues if not reassigned.',
+                    'รายการสมัครสมาชิกในหมวดหมู่นี้จะไม่ถูกลบ แต่อาจแสดงผลผิดพลาดหากไม่กำหนดหมวดหมู่ใหม่',
                   ),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context),
-                      child: const Text('Cancel'),
+                      child: const Text('ยกเลิก'),
                     ),
                     TextButton(
                       style: TextButton.styleFrom(foregroundColor: Colors.red),
@@ -540,17 +540,17 @@ class CategoryManagementScreen extends ConsumerWidget {
                         Navigator.pop(context); // Close confirm
                         Navigator.pop(context); // Close edit
                       },
-                      child: const Text('Delete'),
+                      child: const Text('ลบ'),
                     ),
                   ],
                 ),
               );
             },
-            child: const Text('Delete'),
+            child: const Text('ลบ'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: const Text('ยกเลิก'),
           ),
           TextButton(
             onPressed: () {
@@ -562,7 +562,7 @@ class CategoryManagementScreen extends ConsumerWidget {
               ref.read(categoryRepositoryProvider).addCategory(updated);
               Navigator.pop(context);
             },
-            child: const Text('Save'),
+            child: const Text('บันทึก'),
           ),
         ],
       ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:subtrack/src/features/authentication/data/auth_repository.dart';
 import 'package:subtrack/src/features/authentication/presentation/sign_in_screen.dart';
@@ -14,6 +15,13 @@ class SubTrackApp extends ConsumerWidget {
     return MaterialApp(
       title: 'SubTrack',
       debugShowCheckedModeBanner: false,
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [Locale('th', 'TH')],
+      locale: const Locale('th', 'TH'),
       theme: ThemeData.dark(useMaterial3: true).copyWith(
         scaffoldBackgroundColor: const Color(0xFF121212),
         colorScheme: const ColorScheme.dark(

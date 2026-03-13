@@ -1,16 +1,34 @@
-# subtrack
+# 🚀 SubTrack (Subscription Tracker)
 
-A new Flutter project.
+**SubTrack** เป็นแอปพลิเคชันบนมือถือที่พัฒนาขึ้นเพื่อช่วยคุณติดตาม ควบคุม และจัดการค่าบริการรายเดือน (Subscriptions) หรือรายจ่ายประจำเป็นรอบต่างๆ ได้อย่างมีประสิทธิภาพ ช่วยให้คุณไม่ลืมวันครบกำหนดชำระเงินและสามารถตรวจสอบความเคลื่อนไหวของการใช้จ่ายได้ตลอดเวลา
 
-## Getting Started
+## 🌟 ฟีเจอร์หลัก (Key Features)
 
-This project is a starting point for a Flutter application.
+* **🗓️ ระบบปฏิทิน (Interactive Calendar):** 
+  แสดงจุดเครื่องหมายต่างๆ บนปฏิทินเพื่อให้คุณเห็นวันครบกำหนดชำระเงินในแต่ละเดือนได้อย่างชัดเจน
+* **🔔 ระบบแจ้งเตือนล่วงหน้า (Smart Notifications):** 
+  ระบบแจ้งเตือนก่อนถึงวันครบกำหนดชำระเงินจริง ช่วยป้องกันปัญหาการลืมจ่ายและโดนตัดบัตรแบบไม่รู้ตัว
+* **📊 ประวัติการจ่ายเงิน (Payment History):** 
+  บันทึกและตรวจสอบประวัติการชำระเงินย้อนหลัง ทุกรายการสามารถอิงกับรอบบิลที่เกิดขึ้นจริงได้
+* **🎨 ระบบเข้าสู่ระบบที่ปลอดภัย (Google OAuth):** 
+  ล็อกอินและซิงค์ข้อมูลอย่างปลอดภัยด้วยบัญชี Google ของคุณ ผูกระบบหลังบ้านด้วย Supabase
+* **📂 การจัดการหมวดหมู่ (Dynamic Categories):** 
+  เพิ่ม/ลด หรือแก้ไขหมวดหมู่ค่าใช้จ่ายได้ตามที่คุณต้องการ โดยข้อมูลจะถูกอัปเดตบนหน้าจอทันที (Real-time Stream)
+* **✨ ดีไซน์ระดับพรีเมียม (Premium Gradients & UI):** 
+  ออกแบบแอปพลิเคชันด้วยเทรนด์ล่าสุด รองรับการแสดงผลไล่สีและเงา (Shadow) ให้สัมผัสการใช้งานที่ลื่นไหล
 
-A few resources to get you started if this is your first Flutter project:
+## 🛠️ เทคโนโลยีที่ใช้ (Tech Stack)
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+* **Frontend:** Flutter (Dart)
+* **State Management:** Riverpod
+* **Backend & Database:** Supabase (PostgreSQL, Auth, Realtime Database)
+* **Architecture Design:** Clean Architecture
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 👨‍💻👩‍💻 คณะผู้จัดทำ
+
+โปรเจกต์รายวิชานี้พัฒนาโดย:
+1. **นายบุญญวุฒิ บุตรบุญ** - รหัสนักศึกษา `650612088`
+2. **นางสาวอาทิตยา เที่ยงอารมย์** - รหัสนักศึกษา `650612108`
+
+---
+*พัฒนาเพื่อเป็นส่วนหนึ่งของการศึกษาและประยุกต์ใช้เทคโนโลยีการพัฒนา Mobile Application ร่วมกับ Backend Database ยุคใหม่*

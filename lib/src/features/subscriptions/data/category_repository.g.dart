@@ -7,7 +7,7 @@ part of 'category_repository.dart';
 // **************************************************************************
 
 String _$categoryRepositoryHash() =>
-    r'ea8da6ae128be837b702522e333df37778fb43a5';
+    r'99b5527163a862c8cf8bf479bcd30509e495546e';
 
 /// See also [categoryRepository].
 @ProviderFor(categoryRepository)
@@ -21,6 +21,8 @@ final categoryRepositoryProvider = Provider<CategoryRepository>.internal(
   allTransitiveDependencies: null,
 );
 
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
 typedef CategoryRepositoryRef = ProviderRef<CategoryRepository>;
 // ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member
+// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

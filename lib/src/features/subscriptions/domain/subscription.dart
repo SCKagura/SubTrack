@@ -1,52 +1,26 @@
-import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
 
-part 'subscription.g.dart';
+enum BillingCycle { weekly, monthly, yearly }
 
-@HiveType(typeId: 3)
-enum BillingCycle {
-  @HiveField(0)
-  weekly,
-  @HiveField(1)
-  monthly,
-  @HiveField(2)
-  yearly,
-}
-
-@HiveType(typeId: 4)
 class Subscription {
-  @HiveField(0)
   final String id;
-
-  @HiveField(1)
   final String name;
-
-  @HiveField(2)
   final String categoryId;
-
-  @HiveField(3)
   final double price;
-
-  @HiveField(4)
   final String currency;
-
-  @HiveField(5)
   final BillingCycle cycle;
-
-  @HiveField(6)
   final DateTime firstPaymentDate;
-
-  @HiveField(7)
-  final DateTime nextPaymentDate; // Manual input
-
-  @HiveField(8)
+  final DateTime nextPaymentDate;
   final String status; // 'Active', 'Paused', 'Cancelled'
-
-  @HiveField(9)
   final String? familyMemberId;
-
-  @HiveField(10)
-  final String? userId; // Adding userId for data isolation
+  final String? userId;
+  final String? url;
+  final String? logoUrl;
+  final bool isFreeTrial;
+  final bool isAutoRenew;
+  final bool hasReminder;
+  final int reminderDaysPrior;
+  final DateTime? terminationDate;
 
   Subscription({
     required this.id,
@@ -60,6 +34,13 @@ class Subscription {
     required this.status,
     this.familyMemberId,
     this.userId,
+    this.url,
+    this.logoUrl,
+    this.isFreeTrial = false,
+    this.isAutoRenew = true,
+    this.hasReminder = true,
+    this.reminderDaysPrior = 1,
+    this.terminationDate,
   });
 
   factory Subscription.create({
@@ -71,6 +52,13 @@ class Subscription {
     String currency = 'THB',
     String? familyMemberId,
     String? userId,
+    String? url,
+    String? logoUrl,
+    bool isFreeTrial = false,
+    bool isAutoRenew = true,
+    bool hasReminder = true,
+    int reminderDaysPrior = 1,
+    DateTime? terminationDate,
   }) {
     return Subscription(
       id: const Uuid().v4(),
@@ -80,10 +68,17 @@ class Subscription {
       currency: currency,
       cycle: cycle,
       firstPaymentDate: firstPaymentDate,
-      nextPaymentDate: firstPaymentDate, // Default next is first
+      nextPaymentDate: firstPaymentDate,
       status: 'Active',
       familyMemberId: familyMemberId,
       userId: userId,
+      url: url,
+      logoUrl: logoUrl,
+      isFreeTrial: isFreeTrial,
+      isAutoRenew: isAutoRenew,
+      hasReminder: hasReminder,
+      reminderDaysPrior: reminderDaysPrior,
+      terminationDate: terminationDate,
     );
   }
 
@@ -93,6 +88,13 @@ class Subscription {
     DateTime? nextPaymentDate,
     String? status,
     String? userId,
+    String? url,
+    String? logoUrl,
+    bool? isFreeTrial,
+    bool? isAutoRenew,
+    bool? hasReminder,
+    int? reminderDaysPrior,
+    DateTime? terminationDate,
   }) {
     return Subscription(
       id: id,
@@ -106,6 +108,67 @@ class Subscription {
       status: status ?? this.status,
       familyMemberId: familyMemberId,
       userId: userId ?? this.userId,
+      url: url ?? this.url,
+      logoUrl: logoUrl ?? this.logoUrl,
+      isFreeTrial: isFreeTrial ?? this.isFreeTrial,
+      isAutoRenew: isAutoRenew ?? this.isAutoRenew,
+      hasReminder: hasReminder ?? this.hasReminder,
+      reminderDaysPrior: reminderDaysPrior ?? this.reminderDaysPrior,
+      terminationDate: terminationDate ?? this.terminationDate,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'name': name,
+      'categoryId': categoryId,
+      'price': price,
+      'currency': currency,
+      'cycle': cycle.name,
+      'firstPaymentDate': firstPaymentDate.toIso8601String(),
+      'nextPaymentDate': nextPaymentDate.toIso8601String(),
+      'status': status,
+      'familyMemberId': familyMemberId,
+      'userId': userId,
+      'url': url,
+      'logoUrl': logoUrl,
+      'isFreeTrial': isFreeTrial,
+      'isAutoRenew': isAutoRenew,
+      'hasReminder': hasReminder,
+      'reminderDaysPrior': reminderDaysPrior,
+      'terminationDate': terminationDate?.toIso8601String(),
+    };
+  }
+
+  factory Subscription.fromMap(Map<String, dynamic> map, String id) {
+    return Subscription(
+      id: id,
+      name: map['name'] ?? '',
+      categoryId: map['categoryId'] ?? '',
+      price: (map['price'] ?? 0.0).toDouble(),
+      currency: map['currency'] ?? 'THB',
+      cycle: BillingCycle.values.firstWhere(
+        (e) => e.name == map['cycle'],
+        orElse: () => BillingCycle.monthly,
+      ),
+      firstPaymentDate: DateTime.parse(
+        map['firstPaymentDate'] ?? DateTime.now().toIso8601String(),
+      ),
+      nextPaymentDate: DateTime.parse(
+        map['nextPaymentDate'] ?? DateTime.now().toIso8601String(),
+      ),
+      status: map['status'] ?? 'Active',
+      familyMemberId: map['familyMemberId'],
+      userId: map['userId'],
+      url: map['url'],
+      logoUrl: map['logoUrl'],
+      isFreeTrial: map['isFreeTrial'] ?? false,
+      isAutoRenew: map['isAutoRenew'] ?? true,
+      hasReminder: map['hasReminder'] ?? true,
+      reminderDaysPrior: map['reminderDaysPrior'] ?? 1,
+      terminationDate: map['terminationDate'] != null
+          ? DateTime.parse(map['terminationDate'])
+          : null,
     );
   }
 }

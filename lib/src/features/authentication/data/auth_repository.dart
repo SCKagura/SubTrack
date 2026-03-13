@@ -1,74 +1,76 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:subtrack/src/features/authentication/data/user_profile_repository.dart';
+import 'package:subtrack/src/features/subscriptions/data/subscription_repository.dart';
+import 'package:subtrack/src/features/subscriptions/data/category_repository.dart';
 
 part 'auth_repository.g.dart';
 
 class AuthRepository {
-  final FirebaseAuth _auth;
-  final GoogleSignIn _googleSignIn;
+  final SupabaseClient _supabase;
 
-  AuthRepository(this._auth, this._googleSignIn);
+  AuthRepository(this._supabase);
 
-  Stream<User?> authStateChanges() => _auth.authStateChanges();
+  Stream<AuthState> authStateChanges() => _supabase.auth.onAuthStateChange;
 
-  User? get currentUser => _auth.currentUser;
+  User? get currentUser => _supabase.auth.currentUser;
 
-  // ฟังก์ชันล็อกอินด้วย Google (หัวใจสำคัญของระบบ Auth)
-  Future<UserCredential?> signInWithGoogle() async {
-    try {
-      // 1. Trigger Google Sign In flow
-      // เรียกหน้าต่างล็อกอินของ Google ขึ้นมาให้ผู้ใช้เลือกบัญชี
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) return null; // ถ้าผู้ใช้กดยกเลิก ก็จบการทำงาน
-
-      // 2. Obtain the auth details from the request
-      // ขอข้อมูล Authentication (Token) จาก Google
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
-
-      // 3. Create a new credential
-      // สร้าง "บัตรผ่าน" (Credential) โดยใช้ Access Token และ ID Token ที่ได้มา
-      final OAuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      // 4. Sign in to Firebase with credential
-      // เอาบัตรผ่านมาล็อกอินเข้าสู่ระบบ Firebase (Backend ของเรา)
-      // เมื่อสำเร็จ Firebase จะสร้าง Session ให้ผู้ใช้ใช้งานแอปได้
-      return await _auth.signInWithCredential(credential);
-    } catch (e) {
-      // Handle error
-      rethrow;
-    }
+  /// Sign in with email + password
+  Future<AuthResponse> signInWithEmail(String email, String password) async {
+    return await _supabase.auth.signInWithPassword(
+      email: email,
+      password: password,
+    );
   }
 
-  Future<void> signInAnonymously() async {
-    await _auth.signInAnonymously();
+  /// Sign up with email + password
+  Future<AuthResponse> signUpWithEmail(String email, String password) async {
+    return await _supabase.auth.signUp(email: email, password: password);
+  }
+
+  /// Sign in with Google OAuth (opens browser)
+  Future<void> signInWithGoogle() async {
+    await _supabase.auth.signInWithOAuth(
+      OAuthProvider.google,
+      redirectTo: 'com.example.subtrack2://login-callback/',
+      queryParams: {'prompt': 'select_account'},
+    );
   }
 
   Future<void> signOut() async {
-    await _googleSignIn.signOut();
-    await _auth.signOut();
+    await _supabase.auth.signOut();
   }
 }
 
 @Riverpod(keepAlive: true)
-AuthRepository authRepository(AuthRepositoryRef ref) {
-  return AuthRepository(FirebaseAuth.instance, GoogleSignIn());
+AuthRepository authRepository(Ref ref) {
+  return AuthRepository(Supabase.instance.client);
 }
 
 @riverpod
-Stream<User?> authState(AuthStateRef ref) {
-  return ref.watch(authRepositoryProvider).authStateChanges().asyncMap((
-    user,
-  ) async {
-    if (user != null) {
-      // Ensure profile exists when user logs in
+Stream<User?> authState(Ref ref) {
+  final repo = ref.watch(authRepositoryProvider);
+  return repo.authStateChanges().asyncMap((authState) async {
+    final event = authState.event;
+    final session = authState.session;
+    final user = session?.user;
+
+    if (user != null && event == AuthChangeEvent.signedIn) {
       await ref.read(userProfileRepositoryProvider).ensureUserInitialized(user);
     }
+
+    // When session tokens change, the existing Realtime stream channels (Postgres Changes)
+    // still hold the old expired token and will eventually throw RealtimeSubscribeException.
+    // Invalidating the repository providers forces Riverpod to recreate them,
+    // ensuring the next .stream() call uses the Supabase client with the fresh token.
+    if (event == AuthChangeEvent.tokenRefreshed ||
+        event == AuthChangeEvent.signedIn ||
+        event == AuthChangeEvent.userUpdated) {
+      ref.invalidate(subscriptionRepositoryProvider);
+      ref.invalidate(categoryRepositoryProvider);
+    }
+
     return user;
   });
 }

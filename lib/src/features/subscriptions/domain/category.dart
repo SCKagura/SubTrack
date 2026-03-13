@@ -1,27 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
 
-part 'category.g.dart';
-
-@HiveType(typeId: 1)
 class Category {
-  @HiveField(0)
   final String id;
-
-  @HiveField(1)
   final String name;
-
-  @HiveField(2)
   final int iconCode; // Store IconData.codePoint
-
-  @HiveField(3)
   final int colorValue; // Store Color.value
-
-  @HiveField(4)
   final double monthlyBudget;
-
-  @HiveField(5)
   final String currency;
 
   Category({
@@ -44,7 +29,7 @@ class Category {
       id: const Uuid().v4(),
       name: name,
       iconCode: icon.codePoint,
-      colorValue: color.value,
+      colorValue: color.toARGB32(),
       monthlyBudget: monthlyBudget,
       currency: currency,
     );
@@ -67,31 +52,64 @@ class Category {
     );
   }
 
-  // Predefined defaults
+  Map<String, dynamic> toMap() {
+    return {
+      'name': name,
+      'iconCode': iconCode,
+      'colorValue': colorValue,
+      'monthlyBudget': monthlyBudget,
+      'currency': currency,
+    };
+  }
+
+  factory Category.fromMap(Map<String, dynamic> map, String id) {
+    return Category(
+      id: id,
+      name: map['name'] ?? '',
+      iconCode: map['iconCode'] ?? Icons.category.codePoint,
+      colorValue: map['colorValue'] ?? Colors.grey.toARGB32(),
+      monthlyBudget: (map['monthlyBudget'] ?? 0.0).toDouble(),
+      currency: map['currency'] ?? 'THB',
+    );
+  }
+
+  // Predefined defaults in Thai
   static List<Category> defaults(String currency) {
     return [
       Category.create(
-        name: 'Entertainment',
+        name: 'บันเทิงและสตรีมมิ่ง',
         icon: Icons.movie,
         color: Colors.redAccent,
         currency: currency,
       ),
       Category.create(
-        name: 'Music',
-        icon: Icons.music_note,
-        color: Colors.greenAccent,
-        currency: currency,
-      ),
-      Category.create(
-        name: 'Productivity',
-        icon: Icons.work,
+        name: 'การทำงานและซอฟต์แวร์',
+        icon: Icons.computer,
         color: Colors.blueAccent,
         currency: currency,
       ),
       Category.create(
-        name: 'Utilities',
+        name: 'ที่พักและสาธารณูปโภค',
         icon: Icons.bolt,
         color: Colors.amber,
+        currency: currency,
+      ),
+      Category.create(
+        name: 'สุขภาพและไลฟ์สไตล์',
+        icon: Icons.fitness_center,
+        color: Colors.pinkAccent,
+        currency: currency,
+      ),
+      Category.create(
+        name: 'การเงินและประกัน',
+        icon: Icons.account_balance_wallet,
+        color: Colors.green,
+        currency: currency,
+      ),
+      Category.create(
+        name: 'ช้อปปิ้งและจิปาถะ',
+        icon: Icons.shopping_basket,
+        color: Colors.deepPurpleAccent,
         currency: currency,
       ),
     ];
